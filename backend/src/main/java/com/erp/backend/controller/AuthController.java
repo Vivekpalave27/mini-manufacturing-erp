@@ -3,6 +3,8 @@ package com.erp.backend.controller;
 import com.erp.backend.config.jwt.JwtUtil;
 import com.erp.backend.dto.LoginRequest;
 import com.erp.backend.dto.LoginResponse;
+import com.erp.backend.entity.User;
+import com.erp.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,10 +23,14 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
         try {
+            // 1️⃣ Authenticate credentials
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getEmail(),
@@ -32,7 +38,12 @@ public class AuthController {
                     )
             );
 
-            String token = jwtUtil.generateToken(loginRequest.getEmail());
+            // 2️⃣ Fetch User entity from DB
+            User user = userRepository.findByEmail(loginRequest.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // 3️⃣ Generate JWT with ROLE
+            String token = jwtUtil.generateToken(user);
 
             return ResponseEntity.ok(
                     new LoginResponse(token, "Login successful")
