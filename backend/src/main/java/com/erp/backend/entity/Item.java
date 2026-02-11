@@ -22,6 +22,10 @@ public class Item {
 
     @Column(name = "stock_qty", nullable = false)
     private Integer stockQty;
+    
+    @Column(nullable = false)
+    private Double price;
+
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -70,7 +74,16 @@ public class Item {
         this.stockQty = stockQty;
     }
 
-    public LocalDateTime getCreatedAt() {
+    
+    public Double getPrice() {
+		return price;
+	}
+
+	public void setPrice(Double price) {
+		this.price = price;
+	}
+
+	public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
