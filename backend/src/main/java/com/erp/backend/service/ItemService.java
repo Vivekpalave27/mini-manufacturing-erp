@@ -3,7 +3,7 @@ package com.erp.backend.service;
 import com.erp.backend.dto.ItemRequestDTO;
 import com.erp.backend.dto.ItemResponseDTO;
 import com.erp.backend.entity.Item;
-import com.erp.backend.exception.InsufficientStockException;
+
 import com.erp.backend.repository.ItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -92,31 +92,8 @@ public class ItemService {
 
         return response;
     }
- // INCREASE STOCK
-    public ItemResponseDTO increaseStock(Long itemId, Integer quantity) {
+ 
 
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
-
-        item.setStockQty(item.getStockQty() + quantity);
-
-        return mapToResponse(itemRepository.save(item));
-    }
-
-    // DECREASE STOCK
-    public ItemResponseDTO decreaseStock(Long itemId, Integer quantity) {
-
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
-
-        if (item.getStockQty() < quantity) {
-        	throw new InsufficientStockException("Insufficient stock");
-
-        }
-
-        item.setStockQty(item.getStockQty() - quantity);
-
-        return mapToResponse(itemRepository.save(item));
-    }
+    
 
 }
