@@ -24,47 +24,59 @@ public class PurchaseOrderItem {
     @Column(name = "unit_price", nullable = false)
     private Double unitPrice;
 
-    // Constructors
+    @Column(name = "sub_total")
+    private Double subTotal;
+
     public PurchaseOrderItem() {}
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+	public Long getId() {
+		return id;
+	}
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+	public void setId(Long id) {
+		this.id = id;
+	}
 
-    public PurchaseOrder getPurchaseOrder() {
-        return purchaseOrder;
-    }
+	public PurchaseOrder getPurchaseOrder() {
+		return purchaseOrder;
+	}
 
-    public void setPurchaseOrder(PurchaseOrder purchaseOrder) {
-        this.purchaseOrder = purchaseOrder;
-    }
+	public void setPurchaseOrder(PurchaseOrder purchaseOrder) {
+		this.purchaseOrder = purchaseOrder;
+	}
 
-    public Item getItem() {
-        return item;
-    }
+	public Item getItem() {
+		return item;
+	}
 
-    public void setItem(Item item) {
-        this.item = item;
-    }
+	public void setItem(Item item) {
+		this.item = item;
+	}
 
-    public Integer getQuantity() {
-        return quantity;
-    }
+	public Integer getQuantity() {
+		return quantity;
+	}
 
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
+	public void setQuantity(Integer quantity) {
+		this.quantity = quantity;
+	}
 
-    public Double getUnitPrice() {
-        return unitPrice;
-    }
+	public Double getUnitPrice() {
+		return unitPrice;
+	}
 
-    public void setUnitPrice(Double unitPrice) {
-        this.unitPrice = unitPrice;
-    }
+	public void setUnitPrice(Double unitPrice) {
+		this.unitPrice = unitPrice;
+	}
+
+	public Double getSubTotal() {
+		return subTotal;
+	}
+
+	public void setSubTotal(Double subTotal) {
+		this.subTotal = subTotal;
+	}
+
+    // getters and setters
+    
 }
