@@ -24,9 +24,14 @@ public class SalesOrderItem {
     @Column(name = "unit_price", nullable = false)
     private Double unitPrice;
 
-    public SalesOrderItem() {}
+    @Column(name = "sub_total", nullable = false)
+    private Double subTotal;
+
+    public SalesOrderItem() {
+    }
 
     // Getters and Setters
+
     public Long getId() {
         return id;
     }
@@ -65,5 +70,13 @@ public class SalesOrderItem {
 
     public void setUnitPrice(Double unitPrice) {
         this.unitPrice = unitPrice;
+    }
+
+    public Double getSubTotal() {
+        return subTotal;
+    }
+
+    public void setSubTotal(Double subTotal) {
+        this.subTotal = subTotal;
     }
 }
