@@ -1,7 +1,7 @@
 package com.erp.backend.dto;
 
 public class SalesOrderItemResponseDTO {
-
+	 private Long itemId; 
     private String itemName;
     private Integer quantity;
     private Double unitPrice;
@@ -41,4 +41,13 @@ public class SalesOrderItemResponseDTO {
     public void setSubTotal(Double subTotal) {
         this.subTotal = subTotal;
     }
+
+	public Long getItemId() {
+		return itemId;
+	}
+
+	public void setItemId(Long itemId) {
+		this.itemId = itemId;
+	}
+    
 }

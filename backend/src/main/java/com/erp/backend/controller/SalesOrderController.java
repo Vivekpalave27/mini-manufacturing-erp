@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/sales-orders")
@@ -41,35 +40,13 @@ public class SalesOrderController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<List<SalesOrderResponseDTO>> getAllSalesOrders() {
-
-        List<SalesOrderResponseDTO> response =
-                salesOrderRepository.findAll()
-                        .stream()
-                        .map(order -> salesOrderService.createSalesOrder(
-                                mapToRequest(order)))  // simple mapping workaround
-                        .collect(Collectors.toList());
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(salesOrderService.getAllSalesOrders());
     }
 
     // ✅ Confirm Sales Order (ADMIN only)
     @PutMapping("/{id}/confirm")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> confirmSalesOrder(@PathVariable Long id) {
-
-        SalesOrder order = salesOrderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Sales Order not found"));
-
-        order.setStatus(SalesOrderStatus.CONFIRMED);
-        salesOrderRepository.save(order);
-
-        return ResponseEntity.ok("Sales Order confirmed successfully");
-    }
-
-    // Simple mapper for getAll workaround
-    private SalesOrderRequestDTO mapToRequest(SalesOrder order) {
-        SalesOrderRequestDTO dto = new SalesOrderRequestDTO();
-        dto.setCustomerName(order.getCustomerName());
-        return dto;
+    public ResponseEntity<SalesOrderResponseDTO> confirmOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(salesOrderService.confirmOrder(id));
     }
 }

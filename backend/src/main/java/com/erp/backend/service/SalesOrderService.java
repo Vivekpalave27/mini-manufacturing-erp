@@ -3,6 +3,7 @@ package com.erp.backend.service;
 import com.erp.backend.dto.*;
 import com.erp.backend.entity.*;
 import com.erp.backend.repository.*;
+import com.erp.backend.exception.InsufficientStockException;
 import com.erp.backend.exception.ResourceNotFoundException;
 
 import org.springframework.stereotype.Service;
@@ -72,6 +73,7 @@ public class SalesOrderService {
     private SalesOrderResponseDTO mapToResponse(SalesOrder salesOrder) {
 
         SalesOrderResponseDTO response = new SalesOrderResponseDTO();
+        
         response.setSoNumber(salesOrder.getSoNumber());
         response.setCustomerName(salesOrder.getCustomerName());
         response.setStatus(salesOrder.getStatus().name());
@@ -82,6 +84,7 @@ public class SalesOrderService {
         for (SalesOrderItem item : salesOrder.getItems()) {
 
             SalesOrderItemResponseDTO itemDTO = new SalesOrderItemResponseDTO();
+            itemDTO.setItemId(item.getItem().getId());
             itemDTO.setItemName(item.getItem().getName());
             itemDTO.setQuantity(item.getQuantity());
             itemDTO.setUnitPrice(item.getUnitPrice());
@@ -94,4 +97,58 @@ public class SalesOrderService {
 
         return response;
     }
+    @Transactional
+    public SalesOrderResponseDTO confirmOrder(Long id) {
+
+        SalesOrder order = salesOrderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sales Order not found"));
+
+        // Prevent double confirmation
+        if (order.getStatus() == SalesOrderStatus.CONFIRMED) {
+            throw new IllegalStateException("Sales Order already confirmed");
+        }
+
+        // 🔥 STEP 1: Validate stock for ALL items
+        for (SalesOrderItem orderItem : order.getItems()) {
+
+            Item item = orderItem.getItem();
+
+            if (item.getStockQty() < orderItem.getQuantity()) {
+                throw new InsufficientStockException(
+                        "Insufficient stock for item: " + item.getName()
+                );
+            }
+        }
+
+        // 🔥 STEP 2: Deduct stock
+        for (SalesOrderItem orderItem : order.getItems()) {
+
+            Item item = orderItem.getItem();
+
+            item.setStockQty(item.getStockQty() - orderItem.getQuantity());
+            itemRepository.save(item);
+        }
+
+        // 🔥 STEP 3: Update status
+        order.setStatus(SalesOrderStatus.CONFIRMED);
+
+        SalesOrder savedOrder = salesOrderRepository.save(order);
+
+        return mapToResponse(savedOrder);
+    }
+    public List<SalesOrderResponseDTO> getAllSalesOrders() {
+
+        List<SalesOrder> orders = salesOrderRepository.findAll();
+
+        List<SalesOrderResponseDTO> responses = new ArrayList<>();
+
+        for (SalesOrder order : orders) {
+            responses.add(mapToResponse(order));
+        }
+
+        return responses;
+    }
+
+
+
 }
