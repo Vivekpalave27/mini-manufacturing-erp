@@ -40,4 +40,15 @@ public class GlobalExceptionHandler {
 
 		return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
+	@ExceptionHandler(DuplicateResourceException.class)
+	public ResponseEntity<?> handleDuplicateResource(DuplicateResourceException ex) {
+
+	    return ResponseEntity.status(HttpStatus.CONFLICT).body(
+	            Map.of(
+	                    "error", "Conflict",
+	                    "message", ex.getMessage()
+	            )
+	    );
+	}
+
 }
