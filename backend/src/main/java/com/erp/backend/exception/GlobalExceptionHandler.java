@@ -11,44 +11,64 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-	@ExceptionHandler(InsufficientStockException.class)
-	public ResponseEntity<String> handleInsufficientStock(InsufficientStockException ex) {
-	    return ResponseEntity.badRequest().body(ex.getMessage());
-	}
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex) {
 
-	@ExceptionHandler(ResourceNotFoundException.class)
-	public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                ex.getMessage()
+        );
 
-		Map<String, Object> error = new HashMap<>();
-		error.put("timestamp", LocalDateTime.now());
-		error.put("status", HttpStatus.NOT_FOUND.value());
-		error.put("error", "Not Found");
-		error.put("message", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
 
-		return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-	}
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiError> handleDuplicate(DuplicateResourceException ex) {
 
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
+        ApiError error = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage()
+        );
 
-		Map<String, Object> error = new HashMap<>();
-		error.put("timestamp", LocalDateTime.now());
-		error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-		error.put("error", "Internal Server Error");
-		error.put("message", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
 
-		return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-	}
-	@ExceptionHandler(DuplicateResourceException.class)
-	public ResponseEntity<?> handleDuplicateResource(DuplicateResourceException ex) {
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ApiError> handleStock(InsufficientStockException ex) {
 
-	    return ResponseEntity.status(HttpStatus.CONFLICT).body(
-	            Map.of(
-	                    "error", "Conflict",
-	                    "message", ex.getMessage()
-	            )
-	    );
-	}
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage()
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleGeneral(Exception ex) {
+
+        ApiError error = new ApiError(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                "Something went wrong."
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @ExceptionHandler(InvalidOperationException.class)
+    public ResponseEntity<ApiError> handleInvalidOperation(InvalidOperationException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
 
 }
+
+

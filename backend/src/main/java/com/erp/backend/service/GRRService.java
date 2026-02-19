@@ -3,7 +3,9 @@ package com.erp.backend.service;
 import com.erp.backend.dto.*;
 import com.erp.backend.entity.*;
 import com.erp.backend.repository.*;
+import com.erp.backend.exception.BusinessException;
 import com.erp.backend.exception.DuplicateResourceException;
+import com.erp.backend.exception.InvalidOperationException;
 import com.erp.backend.exception.ResourceNotFoundException;
 
 import org.springframework.stereotype.Service;
@@ -110,4 +112,78 @@ public class GRRService {
 
         return response;
     }
+    @Transactional
+    public void receiveGRR(Long id) {
+
+        // 1️⃣ Validate GRR exists
+        GRR grr = grrRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("GRR not found"));
+
+        // 2️⃣ Validate GRR status
+        if (grr.getStatus() == GRRStatus.RECEIVED) {
+            throw new InvalidOperationException("GRR already received. Stock already updated.");
+        }
+
+        if (grr.getStatus() == GRRStatus.CANCELLED) {
+            throw new InvalidOperationException("Cancelled GRR cannot be received.");
+        }
+
+        // 3️⃣ Validate linked Purchase Order is APPROVED
+        PurchaseOrder po = grr.getPurchaseOrder();
+        if (!po.getStatus().name().equals("APPROVED")) {
+            throw new IllegalStateException("Cannot receive GRR. Purchase Order is not approved.");
+        }
+
+        // 4️⃣ Increase stock for each item
+        for (GRRItem grrItem : grr.getItems()) {
+
+            Item item = grrItem.getItem();
+
+            int currentStock = item.getStockQty();
+            int receivedQty = grrItem.getQuantity();
+
+            item.setStockQty(currentStock + receivedQty);
+
+            itemRepository.save(item);
+        }
+
+        // 5️⃣ Update GRR status
+        grr.setStatus(GRRStatus.RECEIVED);
+
+        grrRepository.save(grr);
+    }
+    public List<GRRResponseDTO> getAllGRR() {
+        return grrRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    public GRRResponseDTO getGRRById(Long id) {
+
+        GRR grr = grrRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("GRR not found"));
+
+        return mapToResponse(grr);
+    }
+    @Transactional
+    public void cancelGRR(Long id) {
+
+        GRR grr = grrRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("GRR not found"));
+
+        if (grr.getStatus() == GRRStatus.RECEIVED) {
+        	throw new BusinessException("Received GRR cannot be cancelled.");
+
+        }
+
+        if (grr.getStatus() == GRRStatus.CANCELLED) {
+            throw new IllegalStateException("GRR already cancelled.");
+        }
+
+        grr.setStatus(GRRStatus.CANCELLED);
+
+        grrRepository.save(grr);
+    }
+
+
 }
