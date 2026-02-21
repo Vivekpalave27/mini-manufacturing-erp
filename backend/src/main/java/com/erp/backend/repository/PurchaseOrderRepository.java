@@ -2,11 +2,14 @@ package com.erp.backend.repository;
 
 import com.erp.backend.entity.PurchaseOrder;
 import org.springframework.data.jpa.repository.JpaRepository;
-
+import java.math.BigDecimal;
+import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 
 public interface PurchaseOrderRepository 
         extends JpaRepository<PurchaseOrder, Long> {
 
     Optional<PurchaseOrder> findByPoNumber(String poNumber);
+    @Query("SELECT SUM(p.totalAmount) FROM PurchaseOrder p WHERE p.status = 'APPROVED'")
+    BigDecimal getTotalPurchaseAmount();
 }
