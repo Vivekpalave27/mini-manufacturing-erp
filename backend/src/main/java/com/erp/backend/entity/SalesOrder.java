@@ -103,5 +103,9 @@ public class SalesOrder {
 	}
 
     // Getters and Setters
+	@PrePersist
+	public void setCreatedAt() {
+	    this.createdAt = LocalDateTime.now();
+	}
     
 }

@@ -86,7 +86,7 @@ public class PurchaseOrder {
 	}
 
 	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
+		this.createdAt = LocalDateTime.now();
 	}
 
 	public List<PurchaseOrderItem> getItems() {

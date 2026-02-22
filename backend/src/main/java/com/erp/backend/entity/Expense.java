@@ -101,7 +101,7 @@ public class Expense {
 	}
 
 	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
+		this.createdAt = LocalDateTime.now();
 	}
 
     // Getters and Setters
