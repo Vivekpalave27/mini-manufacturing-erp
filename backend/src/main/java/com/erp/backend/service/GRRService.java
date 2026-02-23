@@ -41,7 +41,7 @@ public class GRRService {
 
         // 2️⃣ Validate PO status = APPROVED
         if (!purchaseOrder.getStatus().name().equals("APPROVED")) {
-            throw new IllegalStateException("GRR can only be created for APPROVED Purchase Order");
+            throw new BusinessException("GRR can only be created for APPROVED Purchase Order");
         }
 
         // 3️⃣ Prevent duplicate GRR
@@ -131,7 +131,7 @@ public class GRRService {
         // 3️⃣ Validate linked Purchase Order is APPROVED
         PurchaseOrder po = grr.getPurchaseOrder();
         if (!po.getStatus().name().equals("APPROVED")) {
-            throw new IllegalStateException("Cannot receive GRR. Purchase Order is not approved.");
+            throw new BusinessException("Cannot receive GRR. Purchase Order is not approved.");
         }
 
         // 4️⃣ Increase stock for each item
@@ -177,7 +177,7 @@ public class GRRService {
         }
 
         if (grr.getStatus() == GRRStatus.CANCELLED) {
-            throw new IllegalStateException("GRR already cancelled.");
+            throw new BusinessException("GRR already cancelled.");
         }
 
         grr.setStatus(GRRStatus.CANCELLED);

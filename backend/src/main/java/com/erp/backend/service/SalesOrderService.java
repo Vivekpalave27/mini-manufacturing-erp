@@ -3,6 +3,7 @@ package com.erp.backend.service;
 import com.erp.backend.dto.*;
 import com.erp.backend.entity.*;
 import com.erp.backend.repository.*;
+import com.erp.backend.exception.BusinessException;
 import com.erp.backend.exception.InsufficientStockException;
 import com.erp.backend.exception.ResourceNotFoundException;
 
@@ -105,7 +106,7 @@ public class SalesOrderService {
 
         // Prevent double confirmation
         if (order.getStatus() == SalesOrderStatus.CONFIRMED) {
-            throw new IllegalStateException("Sales Order already confirmed");
+            throw new BusinessException("Sales Order already confirmed");
         }
 
         // 🔥 STEP 1: Validate stock for ALL items

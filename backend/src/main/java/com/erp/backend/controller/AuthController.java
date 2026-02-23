@@ -4,6 +4,7 @@ import com.erp.backend.config.jwt.JwtUtil;
 import com.erp.backend.dto.LoginRequest;
 import com.erp.backend.dto.LoginResponse;
 import com.erp.backend.entity.User;
+import com.erp.backend.exception.ResourceNotFoundException;
 import com.erp.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,7 @@ public class AuthController {
 
             // 2️⃣ Fetch User entity from DB
             User user = userRepository.findByEmail(loginRequest.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             // 3️⃣ Generate JWT with ROLE
             String token = jwtUtil.generateToken(user);
