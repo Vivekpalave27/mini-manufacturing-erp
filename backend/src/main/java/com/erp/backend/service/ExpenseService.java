@@ -3,19 +3,22 @@ package com.erp.backend.service;
 import com.erp.backend.dto.ExpenseRequestDTO;
 import com.erp.backend.dto.ExpenseResponseDTO;
 import com.erp.backend.entity.Expense;
+import com.erp.backend.exception.BusinessException;
 import com.erp.backend.exception.ResourceNotFoundException;
 import com.erp.backend.repository.ExpenseRepository;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
@@ -24,8 +27,9 @@ public class ExpenseService {
         this.expenseRepository = expenseRepository;
     }
 
-    // ✅ Create Expense
-    @Transactional
+    // ==========================
+    // CREATE EXPENSE
+    // ==========================
     public ExpenseResponseDTO createExpense(ExpenseRequestDTO requestDTO) {
 
         Expense expense = new Expense();
@@ -34,12 +38,13 @@ public class ExpenseService {
         expense.setCategory(requestDTO.getCategory());
         expense.setExpenseDate(requestDTO.getExpenseDate());
 
-        Expense savedExpense = expenseRepository.save(expense);
-
-        return mapToResponse(savedExpense);
+        return mapToResponse(expenseRepository.save(expense));
     }
 
-    // ✅ Get All Expenses
+    // ==========================
+    // GET ALL EXPENSES
+    // ==========================
+    @Transactional(readOnly = true)
     public List<ExpenseResponseDTO> getAllExpenses() {
         return expenseRepository.findAll()
                 .stream()
@@ -47,31 +52,59 @@ public class ExpenseService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ Get Expense By ID
+    // ==========================
+    // GET BY ID
+    // ==========================
+    @Transactional(readOnly = true)
     public ExpenseResponseDTO getExpenseById(Long id) {
-
-        Expense expense = expenseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
-
-        return mapToResponse(expense);
+        return mapToResponse(getExpenseEntity(id));
     }
 
-    // ✅ Delete Expense
-    @Transactional
+    // ==========================
+    // DELETE EXPENSE
+    // ==========================
     public void deleteExpense(Long id) {
-
-        if (!expenseRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Expense not found");
-        }
-
-        expenseRepository.deleteById(id);
+        expenseRepository.delete(getExpenseEntity(id));
     }
 
-    // 🔹 Mapping Method
+    // ==========================
+    // UPLOAD RECEIPT
+    // ==========================
+    public void uploadReceipt(Long id, MultipartFile file) {
+
+        Expense expense = getExpenseEntity(id);
+
+        try {
+            String uploadDir = "uploads/receipts/";
+            String fileName = System.currentTimeMillis() +
+                    "_" + file.getOriginalFilename();
+
+            Path filePath = Paths.get(uploadDir, fileName);
+
+            Files.createDirectories(filePath.getParent());
+            Files.write(filePath, file.getBytes());
+
+            expense.setReceiptPath(filePath.toString());
+
+        } catch (Exception e) {
+            throw new BusinessException(
+                    "File upload failed. Please try again.");
+        }
+    }
+
+    // ==========================
+    // PRIVATE HELPERS
+    // ==========================
+    private Expense getExpenseEntity(Long id) {
+        return expenseRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Expense not found with id: " + id));
+    }
+
     private ExpenseResponseDTO mapToResponse(Expense expense) {
 
         ExpenseResponseDTO response = new ExpenseResponseDTO();
-
         response.setId(expense.getId());
         response.setExpenseNumber(expense.getExpenseNumber());
         response.setDescription(expense.getDescription());
@@ -82,28 +115,5 @@ public class ExpenseService {
         response.setCreatedAt(expense.getCreatedAt());
 
         return response;
-    }
-    @Transactional
-    public void uploadReceipt(Long id, MultipartFile file) {
-
-        Expense expense = expenseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: " + id));
-
-        try {
-            String uploadDir = "uploads/receipts/";
-            String originalFileName = file.getOriginalFilename();
-            String fileName = System.currentTimeMillis() + "_" + originalFileName;
-
-            Path filePath = Paths.get(uploadDir, fileName);
-
-            Files.createDirectories(filePath.getParent());
-            Files.write(filePath, file.getBytes());
-
-            expense.setReceiptPath(filePath.toString());
-            expenseRepository.save(expense);
-
-        } catch (Exception e) {
-            throw new RuntimeException("File upload failed: " + e.getMessage());
-        }
     }
 }

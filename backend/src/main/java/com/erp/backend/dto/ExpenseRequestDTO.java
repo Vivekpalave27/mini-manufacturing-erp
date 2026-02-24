@@ -1,9 +1,6 @@
 package com.erp.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-
+import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 
 public class ExpenseRequestDTO {
@@ -21,37 +18,15 @@ public class ExpenseRequestDTO {
     @NotNull(message = "Expense date is required")
     private LocalDate expenseDate;
 
-	public String getDescription() {
-		return description;
-	}
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public Double getAmount() { return amount; }
+    public void setAmount(Double amount) { this.amount = amount; }
 
-	public Double getAmount() {
-		return amount;
-	}
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
-	public void setAmount(Double amount) {
-		this.amount = amount;
-	}
-
-	public String getCategory() {
-		return category;
-	}
-
-	public void setCategory(String category) {
-		this.category = category;
-	}
-
-	public LocalDate getExpenseDate() {
-		return expenseDate;
-	}
-
-	public void setExpenseDate(LocalDate expenseDate) {
-		this.expenseDate = expenseDate;
-	}
-
-    // Getters and Setters
+    public LocalDate getExpenseDate() { return expenseDate; }
+    public void setExpenseDate(LocalDate expenseDate) { this.expenseDate = expenseDate; }
 }

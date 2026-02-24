@@ -3,28 +3,34 @@ package com.erp.backend.service;
 import com.erp.backend.dto.SupplierRequestDTO;
 import com.erp.backend.dto.SupplierResponseDTO;
 import com.erp.backend.entity.Supplier;
+import com.erp.backend.exception.DuplicateResourceException;
 import com.erp.backend.exception.ResourceNotFoundException;
 import com.erp.backend.repository.SupplierRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class SupplierService {
 
-    @Autowired
-    private SupplierRepository supplierRepository;
+    private final SupplierRepository supplierRepository;
 
-    // ================================
+    public SupplierService(SupplierRepository supplierRepository) {
+        this.supplierRepository = supplierRepository;
+    }
+
+    // ==========================
     // CREATE SUPPLIER
-    // ================================
+    // ==========================
     public SupplierResponseDTO createSupplier(SupplierRequestDTO request) {
 
         if (supplierRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Supplier with this email already exists");
+            throw new DuplicateResourceException(
+                    "Supplier with email already exists: " + request.getEmail());
         }
 
         Supplier supplier = new Supplier();
@@ -33,47 +39,42 @@ public class SupplierService {
         supplier.setPhone(request.getPhone());
         supplier.setAddress(request.getAddress());
 
-        Supplier saved = supplierRepository.save(supplier);
-
-        return mapToResponse(saved);
+        return mapToResponse(supplierRepository.save(supplier));
     }
 
-    // ================================
+    // ==========================
     // GET ALL SUPPLIERS
-    // ================================
+    // ==========================
+    @Transactional(readOnly = true)
     public List<SupplierResponseDTO> getAllSuppliers() {
-
         return supplierRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    // ================================
-    // GET SUPPLIER BY ID
-    // ================================
+    // ==========================
+    // GET BY ID
+    // ==========================
+    @Transactional(readOnly = true)
     public SupplierResponseDTO getSupplierById(Long id) {
-
-        Supplier supplier = supplierRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Supplier not found with id: " + id));
-
-        return mapToResponse(supplier);
+        return mapToResponse(getSupplierEntity(id));
     }
 
-    // ================================
+    // ==========================
     // UPDATE SUPPLIER
-    // ================================
-    public SupplierResponseDTO updateSupplier(Long id, SupplierRequestDTO request) {
+    // ==========================
+    public SupplierResponseDTO updateSupplier(Long id,
+                                              SupplierRequestDTO request) {
 
-        Supplier supplier = supplierRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Supplier not found with id: " + id));
+        Supplier supplier = getSupplierEntity(id);
 
-        // Check email duplicate only if changed
         if (!supplier.getEmail().equals(request.getEmail()) &&
                 supplierRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Another supplier with this email already exists");
+
+            throw new DuplicateResourceException(
+                    "Another supplier with email already exists: "
+                            + request.getEmail());
         }
 
         supplier.setName(request.getName());
@@ -81,26 +82,26 @@ public class SupplierService {
         supplier.setPhone(request.getPhone());
         supplier.setAddress(request.getAddress());
 
-        Supplier updated = supplierRepository.save(supplier);
-
-        return mapToResponse(updated);
+        return mapToResponse(supplier);
     }
 
-    // ================================
+    // ==========================
     // DELETE SUPPLIER
-    // ================================
+    // ==========================
     public void deleteSupplier(Long id) {
-
-        Supplier supplier = supplierRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Supplier not found with id: " + id));
-
-        supplierRepository.delete(supplier);
+        supplierRepository.delete(getSupplierEntity(id));
     }
 
-    // ================================
-    // MAPPING METHOD
-    // ================================
+    // ==========================
+    // PRIVATE HELPERS
+    // ==========================
+    private Supplier getSupplierEntity(Long id) {
+        return supplierRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Supplier not found with id: " + id));
+    }
+
     private SupplierResponseDTO mapToResponse(Supplier supplier) {
         return new SupplierResponseDTO(
                 supplier.getId(),

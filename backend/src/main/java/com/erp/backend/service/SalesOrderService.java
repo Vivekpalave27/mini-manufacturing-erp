@@ -12,26 +12,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class SalesOrderService {
 
     private final SalesOrderRepository salesOrderRepository;
-    private final SalesOrderItemRepository salesOrderItemRepository;
     private final ItemRepository itemRepository;
 
     public SalesOrderService(SalesOrderRepository salesOrderRepository,
-                             SalesOrderItemRepository salesOrderItemRepository,
                              ItemRepository itemRepository) {
         this.salesOrderRepository = salesOrderRepository;
-        this.salesOrderItemRepository = salesOrderItemRepository;
         this.itemRepository = itemRepository;
     }
 
-    @Transactional
+    // ==========================
+    // CREATE SALES ORDER
+    // ==========================
     public SalesOrderResponseDTO createSalesOrder(SalesOrderRequestDTO requestDTO) {
 
         SalesOrder salesOrder = new SalesOrder();
@@ -41,115 +41,134 @@ public class SalesOrderService {
         salesOrder.setStatus(SalesOrderStatus.CREATED);
         salesOrder.setSoNumber("SO-" + UUID.randomUUID());
 
-        List<SalesOrderItem> orderItems = new ArrayList<>();
         double totalAmount = 0.0;
 
-        for (SalesOrderItemRequestDTO itemDTO : requestDTO.getItems()) {
+        List<SalesOrderItem> orderItems = requestDTO.getItems()
+                .stream()
+                .map(itemDTO -> {
 
-            Item item = itemRepository.findById(itemDTO.getItemId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Item not found"));
+                    Item item = itemRepository.findById(itemDTO.getItemId())
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Item not found with id: " + itemDTO.getItemId()));
 
-            SalesOrderItem orderItem = new SalesOrderItem();
-            orderItem.setSalesOrder(salesOrder);
-            orderItem.setItem(item);
-            orderItem.setQuantity(itemDTO.getQuantity());
-            orderItem.setUnitPrice(itemDTO.getUnitPrice());
+                    SalesOrderItem orderItem = new SalesOrderItem();
+                    orderItem.setSalesOrder(salesOrder);
+                    orderItem.setItem(item);
+                    orderItem.setQuantity(itemDTO.getQuantity());
+                    orderItem.setUnitPrice(itemDTO.getUnitPrice());
 
-            double subTotal = itemDTO.getQuantity() * itemDTO.getUnitPrice();
-            orderItem.setSubTotal(subTotal);
+                    double subTotal = itemDTO.getQuantity() * itemDTO.getUnitPrice();
+                    orderItem.setSubTotal(subTotal);
 
-            totalAmount += subTotal;
+                    return orderItem;
+                })
+                .collect(Collectors.toList());
 
-            orderItems.add(orderItem);
-        }
+        totalAmount = orderItems.stream()
+                .mapToDouble(SalesOrderItem::getSubTotal)
+                .sum();
 
-        salesOrder.setTotalAmount(totalAmount);
         salesOrder.setItems(orderItems);
+        salesOrder.setTotalAmount(totalAmount);
 
         SalesOrder savedOrder = salesOrderRepository.save(salesOrder);
 
         return mapToResponse(savedOrder);
     }
 
-    private SalesOrderResponseDTO mapToResponse(SalesOrder salesOrder) {
-
-        SalesOrderResponseDTO response = new SalesOrderResponseDTO();
-        
-        response.setSoNumber(salesOrder.getSoNumber());
-        response.setCustomerName(salesOrder.getCustomerName());
-        response.setStatus(salesOrder.getStatus().name());
-        response.setTotalAmount(salesOrder.getTotalAmount());
-
-        List<SalesOrderItemResponseDTO> itemResponses = new ArrayList<>();
-
-        for (SalesOrderItem item : salesOrder.getItems()) {
-
-            SalesOrderItemResponseDTO itemDTO = new SalesOrderItemResponseDTO();
-            itemDTO.setItemId(item.getItem().getId());
-            itemDTO.setItemName(item.getItem().getName());
-            itemDTO.setQuantity(item.getQuantity());
-            itemDTO.setUnitPrice(item.getUnitPrice());
-            itemDTO.setSubTotal(item.getSubTotal());
-
-            itemResponses.add(itemDTO);
-        }
-
-        response.setItems(itemResponses);
-
-        return response;
-    }
-    @Transactional
+    // ==========================
+    // CONFIRM SALES ORDER
+    // ==========================
     public SalesOrderResponseDTO confirmOrder(Long id) {
 
-        SalesOrder order = salesOrderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Sales Order not found"));
+        SalesOrder order = getOrderById(id);
 
-        // Prevent double confirmation
+        validateOrderNotConfirmed(order);
+        validateStockAvailability(order);
+
+        deductStock(order);
+
+        order.setStatus(SalesOrderStatus.CONFIRMED);
+
+        return mapToResponse(order);
+    }
+
+    // ==========================
+    // GET ALL ORDERS
+    // ==========================
+    @Transactional(readOnly = true)
+    public List<SalesOrderResponseDTO> getAllSalesOrders() {
+        return salesOrderRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // ==========================
+    // PRIVATE HELPERS
+    // ==========================
+
+    private SalesOrder getOrderById(Long id) {
+        return salesOrderRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Sales Order not found with id: " + id));
+    }
+
+    private void validateOrderNotConfirmed(SalesOrder order) {
         if (order.getStatus() == SalesOrderStatus.CONFIRMED) {
-            throw new BusinessException("Sales Order already confirmed");
+            throw new BusinessException(
+                    "Sales Order already confirmed: " + order.getSoNumber());
         }
+    }
 
-        // 🔥 STEP 1: Validate stock for ALL items
+    private void validateStockAvailability(SalesOrder order) {
         for (SalesOrderItem orderItem : order.getItems()) {
 
             Item item = orderItem.getItem();
 
             if (item.getStockQty() < orderItem.getQuantity()) {
                 throw new InsufficientStockException(
-                        "Insufficient stock for item: " + item.getName()
-                );
+                        "Insufficient stock for item: " + item.getName());
             }
         }
+    }
 
-        // 🔥 STEP 2: Deduct stock
+    private void deductStock(SalesOrder order) {
         for (SalesOrderItem orderItem : order.getItems()) {
 
             Item item = orderItem.getItem();
-
             item.setStockQty(item.getStockQty() - orderItem.getQuantity());
+
             itemRepository.save(item);
         }
-
-        // 🔥 STEP 3: Update status
-        order.setStatus(SalesOrderStatus.CONFIRMED);
-
-        SalesOrder savedOrder = salesOrderRepository.save(order);
-
-        return mapToResponse(savedOrder);
-    }
-    public List<SalesOrderResponseDTO> getAllSalesOrders() {
-
-        List<SalesOrder> orders = salesOrderRepository.findAll();
-
-        List<SalesOrderResponseDTO> responses = new ArrayList<>();
-
-        for (SalesOrder order : orders) {
-            responses.add(mapToResponse(order));
-        }
-
-        return responses;
     }
 
+    private SalesOrderResponseDTO mapToResponse(SalesOrder salesOrder) {
 
+        SalesOrderResponseDTO response = new SalesOrderResponseDTO();
+        response.setSoNumber(salesOrder.getSoNumber());
+        response.setCustomerName(salesOrder.getCustomerName());
+        response.setStatus(salesOrder.getStatus().name());
+        response.setTotalAmount(salesOrder.getTotalAmount());
 
+        response.setItems(
+                salesOrder.getItems()
+                        .stream()
+                        .map(item -> {
+                            SalesOrderItemResponseDTO dto =
+                                    new SalesOrderItemResponseDTO();
+                            dto.setItemId(item.getItem().getId());
+                            dto.setItemName(item.getItem().getName());
+                            dto.setQuantity(item.getQuantity());
+                            dto.setUnitPrice(item.getUnitPrice());
+                            dto.setSubTotal(item.getSubTotal());
+                            return dto;
+                        })
+                        .collect(Collectors.toList())
+        );
+
+        return response;
+    }
 }

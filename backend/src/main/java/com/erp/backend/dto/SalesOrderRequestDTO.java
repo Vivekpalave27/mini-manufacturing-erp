@@ -1,33 +1,21 @@
 package com.erp.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import java.util.List;
 
 public class SalesOrderRequestDTO {
 
-    @NotBlank
+    @NotBlank(message = "Customer name is required")
     private String customerName;
 
-    @NotEmpty
+    @NotEmpty(message = "At least one item is required")
+    @Valid
     private List<SalesOrderItemRequestDTO> items;
 
-    public SalesOrderRequestDTO() {
-    }
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
 
-    public String getCustomerName() {
-        return customerName;
-    }
-
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
-
-    public List<SalesOrderItemRequestDTO> getItems() {
-        return items;
-    }
-
-    public void setItems(List<SalesOrderItemRequestDTO> items) {
-        this.items = items;
-    }
+    public List<SalesOrderItemRequestDTO> getItems() { return items; }
+    public void setItems(List<SalesOrderItemRequestDTO> items) { this.items = items; }
 }
