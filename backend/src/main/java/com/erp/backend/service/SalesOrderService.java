@@ -146,8 +146,10 @@ public class SalesOrderService {
     }
 
     private SalesOrderResponseDTO mapToResponse(SalesOrder salesOrder) {
+    
 
         SalesOrderResponseDTO response = new SalesOrderResponseDTO();
+   	 response.setId(salesOrder.getId());
         response.setSoNumber(salesOrder.getSoNumber());
         response.setCustomerName(salesOrder.getCustomerName());
         response.setStatus(salesOrder.getStatus().name());

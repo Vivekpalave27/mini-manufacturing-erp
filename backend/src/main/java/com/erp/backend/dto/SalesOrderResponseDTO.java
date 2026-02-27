@@ -3,7 +3,7 @@ package com.erp.backend.dto;
 import java.util.List;
 
 public class SalesOrderResponseDTO {
-
+	   private Long id; 
     private String soNumber;
     private String customerName;
     private String status;
@@ -52,4 +52,14 @@ public class SalesOrderResponseDTO {
     public void setItems(List<SalesOrderItemResponseDTO> items) {
         this.items = items;
     }
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+    
+    
 }
