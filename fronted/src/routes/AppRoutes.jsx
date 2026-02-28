@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -7,38 +7,88 @@ import StaffLayout from "../layouts/StaffLayout";
 
 import AdminDashboard from "../pages/AdminDashboard";
 import StaffDashboard from "../pages/StaffDashboard";
+import Items from "../pages/Items";
+import Suppliers from "../pages/Suppliers";
+import PurchaseOrders from "../pages/PurchaseOrders";
+import Inventory from "../pages/Inventory";
 
 const AppRoutes = () => {
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
 
-        <Route path="/" element={<Login />} />
+      {/* Public Route */}
+      <Route path="/" element={<Login />} />
+      <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/admin-dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminLayout>
-                <AdminDashboard />
-              </AdminLayout>
-            </ProtectedRoute>
-          }
-        />
+      {/* ADMIN ROUTES */}
+      <Route
+        path="/admin-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <AdminLayout>
+              <AdminDashboard />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
 
-        <Route
-          path="/staff-dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["STAFF"]}>
-              <StaffLayout>
-                <StaffDashboard />
-              </StaffLayout>
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/items"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <AdminLayout>
+              <Items />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
 
-      </Routes>
-    </BrowserRouter>
+      <Route
+        path="/suppliers"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <AdminLayout>
+              <Suppliers />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/purchase-orders"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <AdminLayout>
+              <PurchaseOrders />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/inventory"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminLayout>
+              <Inventory />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* STAFF ROUTES */}
+      <Route
+        path="/staff-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["STAFF"]}>
+            <StaffLayout>
+              <StaffDashboard />
+            </StaffLayout>
+          </ProtectedRoute>
+        }
+      />
+
+    </Routes>
   );
 };
 

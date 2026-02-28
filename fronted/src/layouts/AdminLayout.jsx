@@ -1,6 +1,8 @@
+
+import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
-
+<Link to="/inventory">Inventory</Link>
 const AdminLayout = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-gray-100">

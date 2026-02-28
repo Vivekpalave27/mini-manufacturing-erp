@@ -22,7 +22,17 @@ function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       const response = await axios.get("/api/dashboard/summary");
-      setSummary(response.data);
+
+      // ✅ Map backend fields correctly
+      setSummary({
+        totalSales: response.data.totalSalesAmount,
+        totalPurchase: response.data.totalPurchaseAmount,
+        totalExpense: response.data.totalExpenseAmount,
+        totalItems: response.data.totalItems,
+        totalSuppliers: response.data.totalSuppliers,
+        lowStockCount: response.data.lowStockItemsCount,
+      });
+
     } catch (err) {
       setError("Failed to load dashboard data.");
     } finally {
@@ -51,14 +61,12 @@ function AdminDashboard() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
         <SummaryCard title="Total Sales" value={summary?.totalSales} color="blue" currency />
         <SummaryCard title="Total Purchases" value={summary?.totalPurchase} color="green" currency />
         <SummaryCard title="Total Expenses" value={summary?.totalExpense} color="red" currency />
-        <SummaryCard title="Total Items" value={summary?.itemCount} color="purple" />
-        <SummaryCard title="Total Suppliers" value={summary?.supplierCount} color="yellow" />
+        <SummaryCard title="Total Items" value={summary?.totalItems} color="purple" />
+        <SummaryCard title="Total Suppliers" value={summary?.totalSuppliers} color="yellow" />
         <SummaryCard title="Low Stock Items" value={summary?.lowStockCount} color="orange" />
-
       </div>
 
       {/* Low Stock Alert */}
@@ -96,7 +104,6 @@ function AdminDashboard() {
           </ResponsiveContainer>
         </div>
       </div>
-
     </div>
   );
 }
