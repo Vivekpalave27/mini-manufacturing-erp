@@ -14,15 +14,14 @@ export const AuthProvider = ({ children }) => {
       try {
         const decoded = jwtDecode(token);
 
-        // 🔥 Check token expiry
-        if (decoded.exp * 1000 < Date.now()) {
+        // Check expiry
+        if (decoded.exp * 1000 > Date.now()) {
+          setUser(decoded);
+        } else {
           localStorage.removeItem("token");
           setUser(null);
-        } else {
-          setUser(decoded);
         }
-
-      } catch (err) {
+      } catch (error) {
         localStorage.removeItem("token");
         setUser(null);
       }
@@ -35,7 +34,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("token", token);
     const decoded = jwtDecode(token);
     setUser(decoded);
-    return decoded; // 🔥 required for role redirect
+    return decoded;
   };
 
   const logout = () => {

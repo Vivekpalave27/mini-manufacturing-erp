@@ -1,6 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import ProtectedRoute from "../components/ProtectedRoute";
+
+import AdminLayout from "../layouts/AdminLayout";
+import StaffLayout from "../layouts/StaffLayout";
+
 import AdminDashboard from "../pages/AdminDashboard";
 import StaffDashboard from "../pages/StaffDashboard";
 
@@ -8,13 +12,16 @@ const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
+
         <Route path="/" element={<Login />} />
 
         <Route
           path="/admin-dashboard"
           element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminDashboard />
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
             </ProtectedRoute>
           }
         />
@@ -23,10 +30,13 @@ const AppRoutes = () => {
           path="/staff-dashboard"
           element={
             <ProtectedRoute allowedRoles={["STAFF"]}>
-              <StaffDashboard />
+              <StaffLayout>
+                <StaffDashboard />
+              </StaffLayout>
             </ProtectedRoute>
           }
         />
+
       </Routes>
     </BrowserRouter>
   );
