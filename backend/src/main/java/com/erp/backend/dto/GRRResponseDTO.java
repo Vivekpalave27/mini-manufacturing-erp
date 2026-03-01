@@ -9,6 +9,7 @@ public class GRRResponseDTO {
     private String status;
     private Double totalAmount;
     private List<GRRItemResponseDTO> items;
+    private Long purchaseOrderId;
 
     // Getters and Setters
     public Long getId() {
@@ -50,4 +51,13 @@ public class GRRResponseDTO {
     public void setItems(List<GRRItemResponseDTO> items) {
         this.items = items;
     }
+
+	public Long getPurchaseOrderId() {
+		return purchaseOrderId;
+	}
+
+	public void setPurchaseOrderId(Long purchaseOrderId) {
+		this.purchaseOrderId = purchaseOrderId;
+	}
+    
 }

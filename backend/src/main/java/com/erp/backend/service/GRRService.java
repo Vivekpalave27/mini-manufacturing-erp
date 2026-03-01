@@ -11,7 +11,10 @@ import com.erp.backend.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,12 +38,20 @@ public class GRRService {
     // ==========================
     public GRRResponseDTO createGRR(GRRRequestDTO requestDTO) {
 
-        PurchaseOrder purchaseOrder = getApprovedPurchaseOrder(requestDTO.getPurchaseOrderId());
+        PurchaseOrder purchaseOrder =
+                getApprovedPurchaseOrder(requestDTO.getPurchaseOrderId());
 
         validateNoDuplicateGRR(purchaseOrder.getId());
 
         GRR grr = new GRR();
+
         grr.setPurchaseOrder(purchaseOrder);
+
+        // ✅ EXPLICITLY SET ALL NOT NULL FIELDS
+        grr.setGrrNumber("GRR-" + UUID.randomUUID());
+        grr.setReceivedDate(LocalDate.now());
+        grr.setCreatedAt(LocalDateTime.now());
+        grr.setStatus(GRRStatus.CREATED);
 
         List<GRRItem> grrItems = requestDTO.getItems()
                 .stream()
@@ -49,14 +60,16 @@ public class GRRService {
                     Item item = itemRepository.findById(itemDTO.getItemId())
                             .orElseThrow(() ->
                                     new ResourceNotFoundException(
-                                            "Item not found with id: " + itemDTO.getItemId()));
+                                            "Item not found with id: "
+                                                    + itemDTO.getItemId()));
 
                     GRRItem grrItem = new GRRItem();
                     grrItem.setGrr(grr);
                     grrItem.setItem(item);
                     grrItem.setQuantity(itemDTO.getQuantity());
                     grrItem.setUnitPrice(itemDTO.getUnitPrice());
-                    grrItem.setSubTotal(itemDTO.getQuantity() * itemDTO.getUnitPrice());
+                    grrItem.setSubTotal(
+                            itemDTO.getQuantity() * itemDTO.getUnitPrice());
 
                     return grrItem;
                 })
@@ -79,14 +92,28 @@ public class GRRService {
     // ==========================
     public void receiveGRR(Long id) {
 
-        GRR grr = getGRRByIdInternal(id);
+        GRR grr = grrRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("GRR not found"));
 
-        validateReceivableStatus(grr);
-        validateLinkedPOApproved(grr);
+        // Prevent double receive
+        if (grr.getStatus() == GRRStatus.RECEIVED) {
+            throw new InvalidOperationException("GRR already received");
+        }
 
-        updateStock(grr);
+        // 🔥 Update Inventory Stock
+        for (GRRItem grrItem : grr.getItems()) {
 
+            Item item = grrItem.getItem();
+
+            // Increase stock
+            item.setStockQty(item.getStockQty() + grrItem.getQuantity());
+
+            itemRepository.save(item);
+        }
+
+        // Update GRR Status
         grr.setStatus(GRRStatus.RECEIVED);
+        grrRepository.save(grr);
     }
 
     // ==========================
@@ -97,11 +124,13 @@ public class GRRService {
         GRR grr = getGRRByIdInternal(id);
 
         if (grr.getStatus() == GRRStatus.RECEIVED) {
-            throw new BusinessException("Received GRR cannot be cancelled.");
+            throw new BusinessException(
+                    "Received GRR cannot be cancelled.");
         }
 
         if (grr.getStatus() == GRRStatus.CANCELLED) {
-            throw new BusinessException("GRR already cancelled.");
+            throw new BusinessException(
+                    "GRR already cancelled.");
         }
 
         grr.setStatus(GRRStatus.CANCELLED);
@@ -144,10 +173,11 @@ public class GRRService {
 
     private void validateNoDuplicateGRR(Long purchaseOrderId) {
         grrRepository.findByPurchaseOrderId(purchaseOrderId)
-                .ifPresent(existing ->
-                        { throw new DuplicateResourceException(
-                                "GRR already exists for Purchase Order ID: "
-                                        + purchaseOrderId); });
+                .ifPresent(existing -> {
+                    throw new DuplicateResourceException(
+                            "GRR already exists for Purchase Order ID: "
+                                    + purchaseOrderId);
+                });
     }
 
     private GRR getGRRByIdInternal(Long id) {
@@ -196,6 +226,8 @@ public class GRRService {
 
         GRRResponseDTO response = new GRRResponseDTO();
         response.setId(grr.getId());
+        response.setPurchaseOrderId(
+                grr.getPurchaseOrder().getId());
         response.setGrrNumber(grr.getGrrNumber());
         response.setStatus(grr.getStatus().name());
         response.setTotalAmount(grr.getTotalAmount());
