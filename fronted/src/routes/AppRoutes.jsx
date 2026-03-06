@@ -1,4 +1,7 @@
 import { Routes, Route } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../auth/AuthContext";
+
 import Login from "../pages/Login";
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -7,29 +10,40 @@ import StaffLayout from "../layouts/StaffLayout";
 
 import AdminDashboard from "../pages/AdminDashboard";
 import StaffDashboard from "../pages/StaffDashboard";
+
 import Items from "../pages/Items";
 import Suppliers from "../pages/Suppliers";
 import PurchaseOrders from "../pages/PurchaseOrders";
 import Inventory from "../pages/Inventory";
 
-// ✅ GRR
 import GRRList from "../pages/grr/GRRList";
 import CreateGRR from "../pages/grr/CreateGRR";
 
-// ✅ Sales Order
 import SalesOrderList from "../pages/sales-order/SalesOrderList";
 import CreateSalesOrder from "../pages/sales-order/CreateSalesOrder";
+
+import ExpensePage from "../pages/ExpensePage";
+import ReportsPage from "../pages/ReportsPage";
+
+const LayoutWrapper = ({ children }) => {
+  const { user } = useContext(AuthContext);
+
+  if (user?.role === "ADMIN") {
+    return <AdminLayout>{children}</AdminLayout>;
+  }
+
+  return <StaffLayout>{children}</StaffLayout>;
+};
 
 const AppRoutes = () => {
   return (
     <Routes>
 
-      {/* Public Routes */}
+      {/* PUBLIC */}
       <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
 
-      {/* ================= ADMIN ROUTES ================= */}
-
+      {/* ADMIN DASHBOARD */}
       <Route
         path="/admin-dashboard"
         element={
@@ -41,6 +55,19 @@ const AppRoutes = () => {
         }
       />
 
+      {/* STAFF DASHBOARD */}
+      <Route
+        path="/staff-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["STAFF"]}>
+            <StaffLayout>
+              <StaffDashboard />
+            </StaffLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ADMIN ONLY */}
       <Route
         path="/items"
         element={
@@ -53,48 +80,11 @@ const AppRoutes = () => {
       />
 
       <Route
-        path="/suppliers"
+        path="/expenses"
         element={
           <ProtectedRoute allowedRoles={["ADMIN"]}>
             <AdminLayout>
-              <Suppliers />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/purchase-orders"
-        element={
-          <ProtectedRoute allowedRoles={["ADMIN"]}>
-            <AdminLayout>
-              <PurchaseOrders />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ================= SHARED ROUTES (ADMIN + STAFF) ================= */}
-
-      <Route
-        path="/inventory"
-        element={
-          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
-            <AdminLayout>
-              <Inventory />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ================= GRR ROUTES ================= */}
-
-      <Route
-        path="/grr"
-        element={
-          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
-            <AdminLayout>
-              <GRRList />
+              <ExpensePage />
             </AdminLayout>
           </ProtectedRoute>
         }
@@ -111,19 +101,6 @@ const AppRoutes = () => {
         }
       />
 
-      {/* ================= SALES ORDER ROUTES ================= */}
-
-      <Route
-        path="/sales-orders"
-        element={
-          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
-            <AdminLayout>
-              <SalesOrderList />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-
       <Route
         path="/sales-orders/create"
         element={
@@ -135,15 +112,69 @@ const AppRoutes = () => {
         }
       />
 
-      {/* ================= STAFF ROUTES ================= */}
+      {/* SHARED ROUTES (ADMIN + STAFF) */}
+      <Route
+        path="/inventory"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <LayoutWrapper>
+              <Inventory />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
-        path="/staff-dashboard"
+        path="/suppliers"
         element={
-          <ProtectedRoute allowedRoles={["STAFF"]}>
-            <StaffLayout>
-              <StaffDashboard />
-            </StaffLayout>
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <LayoutWrapper>
+              <Suppliers />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/purchase-orders"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <LayoutWrapper>
+              <PurchaseOrders />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/sales-orders"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <LayoutWrapper>
+              <SalesOrderList />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/grr"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <LayoutWrapper>
+              <GRRList />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <LayoutWrapper>
+              <ReportsPage />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />

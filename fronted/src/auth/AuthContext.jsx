@@ -14,15 +14,18 @@ export const AuthProvider = ({ children }) => {
       try {
         const decoded = jwtDecode(token);
 
-        // Check expiry
+        // 🔥 Check token expiry
         if (decoded.exp * 1000 > Date.now()) {
           setUser(decoded);
+          localStorage.setItem("role", decoded.role); // ✅ store role
         } else {
           localStorage.removeItem("token");
+          localStorage.removeItem("role");
           setUser(null);
         }
       } catch (error) {
         localStorage.removeItem("token");
+        localStorage.removeItem("role");
         setUser(null);
       }
     }
@@ -32,13 +35,18 @@ export const AuthProvider = ({ children }) => {
 
   const login = (token) => {
     localStorage.setItem("token", token);
+
     const decoded = jwtDecode(token);
+
+    localStorage.setItem("role", decoded.role); // ✅ important
     setUser(decoded);
+
     return decoded;
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("role");
     setUser(null);
   };
 

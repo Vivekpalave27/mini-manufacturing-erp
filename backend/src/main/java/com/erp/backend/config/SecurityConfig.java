@@ -44,18 +44,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-    	http
-        .cors(cors -> {})
-        .csrf(csrf -> csrf.disable())
+        http
+            .cors(cors -> {})
+            .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-
             .exceptionHandling(exception -> exception
                 .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler)
             )
-
             .authorizeHttpRequests(auth -> auth
 
                 // ✅ Swagger Public Access
@@ -69,6 +67,9 @@ public class SecurityConfig {
                 // ✅ Auth Public
                 .requestMatchers("/api/auth/**").permitAll()
 
+                // ✅ Allow uploaded files publicly
+                .requestMatchers("/uploads/**").permitAll()
+
                 // 🔐 ADMIN ONLY
                 .requestMatchers("/api/users/**").hasRole("ADMIN")
                 .requestMatchers("/api/roles/**").hasRole("ADMIN")
@@ -76,7 +77,7 @@ public class SecurityConfig {
                 // 🔐 ADMIN + STAFF
                 .requestMatchers("/api/items/**").hasAnyRole("ADMIN", "STAFF")
 
-                // 🔐 ALL OTHER REQUESTS
+                // 🔐 All other secured APIs
                 .anyRequest().authenticated()
             )
 

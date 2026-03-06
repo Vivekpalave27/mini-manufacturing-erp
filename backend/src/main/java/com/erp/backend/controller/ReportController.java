@@ -9,7 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -26,11 +26,13 @@ public class ReportController {
     @GetMapping("/sales")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public SalesReportResponseDTO getSalesReport(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime startDate,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate startDate,
 
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime endDate) {
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate endDate) {
 
         return reportService.getSalesReport(startDate, endDate);
     }
@@ -40,25 +42,29 @@ public class ReportController {
     @GetMapping("/purchase")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public PurchaseReportResponseDTO getPurchaseReport(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime startDate,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate startDate,
 
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime endDate) {
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate endDate) {
 
         return reportService.getPurchaseReport(startDate, endDate);
     }
 
     // ================= EXPENSE REPORT =================
 
-    @GetMapping("/expenses")
+    @GetMapping("/expense")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ExpenseReportResponseDTO getExpenseReport(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime startDate,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate startDate,
 
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime endDate) {
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate endDate) {
 
         return reportService.getExpenseReport(startDate, endDate);
     }

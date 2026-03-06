@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import axiosInstance from "../api/axiosConfig";
 import { AuthContext } from "../auth/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +10,21 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // 🔥 added
+  const [loading, setLoading] = useState(false);
+
+  // 🔥 Auto Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (token && role) {
+      if (role === "ADMIN") {
+        navigate("/admin-dashboard");
+      } else if (role === "STAFF") {
+        navigate("/staff-dashboard");
+      }
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,13 +39,15 @@ function Login() {
 
       const token = response.data.token;
 
-      // login() should return decoded token
+      // login() should decode token and store role
       const decoded = login(token);
 
       if (decoded.role === "ADMIN") {
         navigate("/admin-dashboard");
-      } else {
+      } else if (decoded.role === "STAFF") {
         navigate("/staff-dashboard");
+      } else {
+        setError("Invalid role assigned.");
       }
 
     } catch (err) {

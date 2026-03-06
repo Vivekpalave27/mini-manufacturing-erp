@@ -11,6 +11,7 @@ import com.erp.backend.repository.ExpenseRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
@@ -30,14 +31,17 @@ public class ReportService {
 
     // ================= SALES REPORT =================
 
-    public SalesReportResponseDTO getSalesReport(LocalDateTime startDate,
-                                                 LocalDateTime endDate) {
+    public SalesReportResponseDTO getSalesReport(LocalDate startDate,
+                                                 LocalDate endDate) {
+
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(23, 59, 59);
 
         BigDecimal totalAmount =
-                salesOrderRepository.getSalesAmountBetweenDates(startDate, endDate);
+                salesOrderRepository.getSalesAmountBetweenDates(start, end);
 
         Long totalOrders =
-                salesOrderRepository.countSalesBetweenDates(startDate, endDate);
+                salesOrderRepository.countSalesBetweenDates(start, end);
 
         SalesReportResponseDTO response = new SalesReportResponseDTO();
 
@@ -49,22 +53,25 @@ public class ReportService {
                 totalOrders != null ? totalOrders : 0L
         );
 
-        response.setStartDate(startDate);
-        response.setEndDate(endDate);
+        response.setStartDate(start);
+        response.setEndDate(end);
 
         return response;
     }
 
     // ================= PURCHASE REPORT =================
 
-    public PurchaseReportResponseDTO getPurchaseReport(LocalDateTime startDate,
-                                                       LocalDateTime endDate) {
+    public PurchaseReportResponseDTO getPurchaseReport(LocalDate startDate,
+                                                       LocalDate endDate) {
+
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(23, 59, 59);
 
         BigDecimal totalAmount =
-                purchaseOrderRepository.getPurchaseAmountBetweenDates(startDate, endDate);
+                purchaseOrderRepository.getPurchaseAmountBetweenDates(start, end);
 
         Long totalOrders =
-                purchaseOrderRepository.countPurchaseBetweenDates(startDate, endDate);
+                purchaseOrderRepository.countPurchaseBetweenDates(start, end);
 
         PurchaseReportResponseDTO response = new PurchaseReportResponseDTO();
 
@@ -76,22 +83,25 @@ public class ReportService {
                 totalOrders != null ? totalOrders : 0L
         );
 
-        response.setStartDate(startDate);
-        response.setEndDate(endDate);
+        response.setStartDate(start);
+        response.setEndDate(end);
 
         return response;
     }
 
     // ================= EXPENSE REPORT =================
 
-    public ExpenseReportResponseDTO getExpenseReport(LocalDateTime startDate,
-                                                     LocalDateTime endDate) {
+    public ExpenseReportResponseDTO getExpenseReport(LocalDate startDate,
+                                                     LocalDate endDate) {
+
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(23, 59, 59);
 
         BigDecimal totalAmount =
-                expenseRepository.getExpenseAmountBetweenDates(startDate, endDate);
+                expenseRepository.getExpenseAmountBetweenDates(start, end);
 
         Long totalExpenses =
-                expenseRepository.countExpenseBetweenDates(startDate, endDate);
+                expenseRepository.countExpenseBetweenDates(start, end);
 
         ExpenseReportResponseDTO response = new ExpenseReportResponseDTO();
 
@@ -103,8 +113,8 @@ public class ReportService {
                 totalExpenses != null ? totalExpenses : 0L
         );
 
-        response.setStartDate(startDate);
-        response.setEndDate(endDate);
+        response.setStartDate(start);
+        response.setEndDate(end);
 
         return response;
     }
